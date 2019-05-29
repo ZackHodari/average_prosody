@@ -52,10 +52,10 @@ cd average_prosody
 mkdir experiments
 
 python f0_RNN.py --experiment_name RNN \
-	--data_root ~/data/Blizzard2017 \
-	--train_dir train --train_id_list train_file_id_list.scp \
-	--valid_dir valid --train_id_list valid_file_id_list.scp \
-	--end_epoch 100 \
+    --data_root ~/data/Blizzard2017 \
+    --train_dir train --train_id_list train_file_id_list.scp \
+    --valid_dir valid --train_id_list valid_file_id_list.scp \
+    --end_epoch 100 \
     --num_data_threads 4 \
     --learning_rate 0.005 \
     --batch_size 32 \
@@ -63,18 +63,18 @@ python f0_RNN.py --experiment_name RNN \
     --lr_schedule_kwargs {'warmup_steps': 1000}
 
 python f0_RNN_scaled.py --experiment_name RNN_scaled \
-	--data_root ~/data/Blizzard2017 \
-	--no-train \
-	--checkpoint_path experiments/RNN/checkpoints/epoch_30.pt
-	--valid_dir valid --train_id_list valid_file_id_list.scp \
+    --data_root ~/data/Blizzard2017 \
+    --no-train \
+    --checkpoint_path experiments/RNN/checkpoints/epoch_30.pt
+    --valid_dir valid --train_id_list valid_file_id_list.scp \
     --num_data_threads 4 \
     --batch_size 32
 
 python f0_MDN.py --experiment_name MDN \
-	--data_root ~/data/Blizzard2017 \
-	--train_dir train --train_id_list train_file_id_list.scp \
-	--valid_dir valid --train_id_list valid_file_id_list.scp \
-	--end_epoch 100 \
+    --data_root ~/data/Blizzard2017 \
+    --train_dir train --train_id_list train_file_id_list.scp \
+    --valid_dir valid --train_id_list valid_file_id_list.scp \
+    --end_epoch 100 \
     --num_data_threads 4 \
     --learning_rate 0.005 \
     --batch_size 32 \
@@ -83,10 +83,10 @@ python f0_MDN.py --experiment_name MDN \
     --model_kwargs {'var_floor': 1e-4}
 
 python f0_VAE.py --experiment_name VAE \
-	--data_root ~/data/Blizzard2017 \
-	--train_dir train --train_id_list train_file_id_list.scp \
-	--valid_dir valid --train_id_list valid_file_id_list.scp \
-	--end_epoch 100 \
+    --data_root ~/data/Blizzard2017 \
+    --train_dir train --train_id_list train_file_id_list.scp \
+    --valid_dir valid --train_id_list valid_file_id_list.scp \
+    --end_epoch 100 \
     --num_data_threads 4 \
     --learning_rate 0.005 \
     --batch_size 32 \
