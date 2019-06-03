@@ -1,7 +1,7 @@
 # average_prosody
 Code for paper titled "Using generative modelling to produce varied intonation for speech synthesis" submitted to the Speech Synthesis Workshop.
 
-Speech samples are available at [zackhodari.github.io/SSW_2019_average_prosody](http://zackhodari.github.io/SSW_2019_average_prosody).
+Speech samples are available at [zackhodari.github.io/SSW_2019_average_prosody](http://zackhodari.github.io/SSW_2019_average_prosody.html).
 
 
 
