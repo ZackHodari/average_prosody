@@ -4,23 +4,26 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from morgana.base_models import BaseAcousticModel
+from morgana.base_models import BaseSPSS
 from morgana.experiment_builder import ExperimentBuilder
 from morgana.metrics import LF0Distortion
-from morgana.synthesis import MLPG
+from morgana.viz.synthesis import MLPG
 from morgana import data
 from morgana import utils
 
-import tts_data_tools as tdt
+from misc import batch_synth
 
 
-class F0_RNN(BaseAcousticModel):
-    def __init__(self, normalisers=None, dropout_prob=0.):
+class F0_RNN(BaseSPSS):
+    def __init__(self, input_dim=600+9, output_dim=1*3, dropout_prob=0.):
         """Initialises acoustic model parameters and settings."""
-        super(F0_RNN, self).__init__(normalisers=normalisers)
+        super(F0_RNN, self).__init__()
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.dropout_prob = dropout_prob
 
         self.recurrent_layers = utils.SequentialWithRecurrent(
-            nn.Linear(self.conditioning_dim, 256),
+            nn.Linear(self.input_dim, 256),
             nn.Sigmoid(),
             nn.Dropout(p=dropout_prob),
             utils.RecurrentCuDNNWrapper(
@@ -61,36 +64,25 @@ class F0_RNN(BaseAcousticModel):
 
         return data_sources
 
-    @property
-    def output_dim(self):
-        return 1 * 3
-
-    @property
-    def conditioning_dim(self):
-        return 600 + 9
-
     def predict(self, features):
         # Prepare inputs.
         norm_lab = features['normalised_lab']
         dur = features['dur']
-        norm_lab_at_frame_rate = utils.upsample_to_durations(norm_lab, dur)
+        norm_lab_at_frame_rate = utils.upsample_to_repetitions(norm_lab, dur)
 
         norm_counters = features['normalised_counters']
         model_inputs = torch.cat((norm_lab_at_frame_rate, norm_counters), dim=-1)
 
         # Run the encoder.
         n_frames = features['n_frames']
-        pred_norm_lf0_deltas, _ = self.recurrent_layers(model_inputs, seq_len=n_frames)
+        pred_norm_lf0_deltas = self.recurrent_layers(model_inputs, seq_len=n_frames)
 
         # Prepare the outputs.
         pred_lf0_deltas = self.normalisers['lf0'].denormalise(pred_norm_lf0_deltas, deltas=True)
 
         # MLPG to select the most probable trajectory given the delta and delta-delta features.
-        device = pred_lf0_deltas.device
-        pred_lf0 = MLPG.generate(pred_lf0_deltas.detach().cpu().numpy(),
-                                 self.normalisers['lf0'].delta_params['std_dev'] ** 2)
-
-        pred_lf0 = torch.tensor(pred_lf0).type(torch.float).to(device)
+        pred_lf0 = MLPG(means=pred_lf0_deltas,
+                        variances=self.normalisers['lf0'].delta_params['std_dev'] ** 2)
 
         outputs = {
             'normalised_lf0_deltas': pred_norm_lf0_deltas,
@@ -111,17 +103,9 @@ class F0_RNN(BaseAcousticModel):
 
         return self._loss(inputs, outputs, seq_len)
 
-    def analysis_for_eval_batch(self, output_features, features, names, out_dir, sample_rate=16000):
-        super(F0_RNN, self).analysis_for_eval_batch(output_features, features, names, out_dir, sample_rate)
-
-        lf0 = output_features['lf0'].cpu().detach().numpy()
-        n_frames = features['n_frames'].cpu().detach().numpy()
-
-        raw_dir = os.path.join(out_dir, 'raw', 'lf0')
-        os.makedirs(raw_dir, exist_ok=True)
-        for i, name in enumerate(names):
-            feat_path = os.path.join(raw_dir, '{}.lf0'.format(name))
-            tdt.file_io.save_bin(lf0[i, :n_frames[i]], feat_path)
+    def analysis_for_valid_batch(self, features, output_features, names, out_dir, sample_rate=16000, **kwargs):
+        super(F0_RNN, self).analysis_for_valid_batch(features, output_features, names, out_dir, **kwargs)
+        batch_synth(features, output_features, names, out_dir, sample_rate)
 
 
 def main():

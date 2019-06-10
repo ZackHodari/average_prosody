@@ -6,10 +6,9 @@ from f0_RNN import F0_RNN
 
 
 class F0_RNN_Scaled(F0_RNN):
-    def __init__(self, normalisers=None, dropout_prob=0., scale=3):
+    def __init__(self, input_dim=600+9, output_dim=1*3, dropout_prob=0., scale=3):
         """Initialises acoustic model parameters and settings."""
-        super(F0_RNN_Scaled, self).__init__(normalisers=normalisers, dropout_prob=dropout_prob)
-
+        super(F0_RNN_Scaled, self).__init__(input_dim=input_dim, output_dim=output_dim, dropout_prob=dropout_prob)
         self.scale = scale
 
     def predict(self, features):
@@ -21,6 +20,7 @@ class F0_RNN_Scaled(F0_RNN):
         lf0_residual = pred_lf0 - pred_lf0_mean
         pred_lf0_scaled = pred_lf0_mean + self.scale * lf0_residual
 
+        # The loss is defined based on 'normalised_lf0_deltas' so this scaling will not interact with model training.
         outputs['lf0'] = pred_lf0_scaled
 
         return outputs
