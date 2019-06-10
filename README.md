@@ -1,18 +1,25 @@
 # average_prosody
-Code for paper titled "Using generative modelling to produce varied intonation for speech synthesis" submitted to the Speech Synthesis Workshop.
+Code for paper titled "Using generative modelling to produce varied intonation for speech synthesis" submitted to the
+Speech Synthesis Workshop.
 
-Speech samples are available at [zackhodari.github.io/SSW_2019_average_prosody](http://zackhodari.github.io/SSW_2019_average_prosody.html).
-
-
-
-## NOTE: The library used by this code ([`morgana`](https://github.com/ZackHodari/morgana)) is being prepared for open-source release, currently only the model definition is included here.
+Speech samples are available at
+[zackhodari.github.io/SSW_2019_average_prosody](http://zackhodari.github.io/SSW_2019_average_prosody.html).
 
 
+The models defined in this repo should be run using the [`Morgana`](https://github.com/ZackHodari/morgana) toolkit.
 
-# Data setup ([`tts_data_tools`](https://github.com/ZackHodari/tts_data_tools))
-Extraction with [`tts_data_tools`](https://github.com/ZackHodari/tts_data_tools) currently requires wavfiles at the desired frame-rate (16kHz in the paper), and label files with time alignments (label_state_align).
 
-If you want to prepare your own data to use with [`morgana`](https://github.com/ZackHodari/morgana) you will need a directory for each data split (e.g. `train`). Each of these must contain individual directories for each feature being loaded, this will then be loaded by the `morgana.data._DataSource` instances created within the model file, you can write your own data sources to load any file type you need.
+
+# Data setup
+Extraction with [`tts_data_tools`](https://github.com/ZackHodari/tts_data_tools) currently requires wavfiles at the
+desired frame-rate (16kHz in the paper), and label files with time alignments (label_state_align).
+
+If you want to prepare your own data to use with [`Morgana`](https://github.com/ZackHodari/morgana) you will need a
+directory for each data split (e.g. `train`). Each of these must contain individual directories for each feature being
+loaded, this will then be loaded by the `morgana.data._DataSource` instances created within the model file, you can
+write your own data sources to load any file type you need. See
+[`Morgana`'s data loading](https://zackhodari.github.io/morgana/reference/morgana.data.html#morgana.data._DataSource)
+for more details.
 
 ```bash
 pip install git+https://github.com/zackhodari/tts_data_tools
@@ -42,7 +49,7 @@ tdt_process_dataset \
 
 
 
-# Usage (when [`morgana`](https://github.com/ZackHodari/morgana) is released)
+# Usage
 
 ```bash
 pip install git+https://github.com/zackhodari/morgana
@@ -86,6 +93,7 @@ python f0_VAE.py --experiment_name VAE \
     --data_root ~/data/Blizzard2017 \
     --train_dir train --train_id_list train_file_id_list.scp \
     --valid_dir valid --valid_id_list valid_file_id_list.scp \
+    --test_dir valid --test_id_list valid_file_id_list.scp \
     --end_epoch 100 \
     --num_data_threads 4 \
     --learning_rate 0.005 \
