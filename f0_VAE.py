@@ -1,16 +1,16 @@
 import os
 
-import numpy as np
 import torch
 import torch.nn as nn
 
 from morgana.base_models import BaseVAE
 from morgana.metrics import LF0Distortion
 from morgana.viz.synthesis import MLPG
-from morgana import data
 from morgana import utils
 
 from misc import batch_synth, VAEExperimentBuilder
+
+from tts_data_tools import data_sources
 
 
 class _Encoder(nn.Module):
@@ -91,21 +91,21 @@ class VAE(BaseVAE):
 
     def train_data_sources(self):
         return {
-            'n_frames': data.TextSource('n_frames'),
-            'n_phones': data.TextSource('n_phones'),
-            'dur': data.TextSource('dur', normalisation='mvn'),
-            'lab': data.NumpyBinarySource('lab', normalisation='minmax'),
-            'counters': data.NumpyBinarySource('counters', normalisation='minmax'),
-            'lf0': data.NumpyBinarySource('lf0', normalisation='mvn', use_deltas=True),
-            'vuv': data.NumpyBinarySource('vuv', dtype=np.bool),
+            'n_frames': data_sources.TextSource('n_frames'),
+            'n_phones': data_sources.TextSource('n_phones'),
+            'dur': data_sources.TextSource('dur', normalisation='mvn'),
+            'lab': data_sources.NumpyBinarySource('lab', normalisation='minmax'),
+            'counters': data_sources.NumpyBinarySource('counters', normalisation='minmax'),
+            'lf0': data_sources.NumpyBinarySource('lf0', normalisation='mvn', use_deltas=True),
+            'vuv': data_sources.NumpyBinarySource('vuv'),
         }
 
     def valid_data_sources(self):
-        data_sources = self.train_data_sources()
-        data_sources['sp'] = data.NumpyBinarySource('sp')
-        data_sources['ap'] = data.NumpyBinarySource('ap')
+        sources = self.train_data_sources()
+        sources['sp'] = data_sources.NumpyBinarySource('sp')
+        sources['ap'] = data_sources.NumpyBinarySource('ap')
 
-        return data_sources
+        return sources
 
     def encode(self, features):
         # Prepare inputs.
@@ -163,6 +163,7 @@ class VAE(BaseVAE):
         outputs = output_features['normalised_lf0_deltas']
         seq_len = input_features['n_frames']
 
+        latent = output_features['latent']
         mean = output_features['mean']
         log_variance = output_features['log_variance']
 
@@ -170,7 +171,7 @@ class VAE(BaseVAE):
             self.mode,
             LF0_RMSE_Hz=(input_features['lf0'], output_features['lf0'], seq_len, input_features['vuv']))
 
-        return self._loss(inputs, outputs, mean, log_variance, seq_len)
+        return self._loss(inputs, outputs, latent, mean, log_variance, seq_len)
 
     def analysis_for_valid_batch(self, features, output_features, names, out_dir, sample_rate=16000, **kwargs):
         super(VAE, self).analysis_for_valid_batch(features, output_features, names, out_dir, **kwargs)

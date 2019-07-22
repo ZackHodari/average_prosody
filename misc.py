@@ -6,37 +6,29 @@ from scipy.signal import savgol_filter
 import torch
 from tqdm import tqdm
 
-from morgana.experiment_builder import add_boolean_arg, ExperimentBuilder
+from morgana.experiment_builder import ExperimentBuilder
 from morgana import lr_schedules
+from morgana import utils
 from morgana import _logging
 from tts_data_tools import file_io
+from tts_data_tools.wav_gen import world
 
 
-# Synthesise outputs using WORLD.
 def batch_synth(features, output_features, names, out_dir, sample_rate=16000):
     synth_dir = os.path.join(out_dir, 'synth')
     os.makedirs(synth_dir, exist_ok=True)
 
-    lf0 = output_features['lf0'].cpu().detach().numpy()
+    lf0, vuv, sp, ap = utils.detach_batched_seqs(
+        output_features['lf0'], features['vuv'], features['sp'], features['ap'],
+        seq_len=features['n_frames'])
 
-    vuv = features['vuv'].cpu().detach().numpy()
-    sp = features['sp'].cpu().detach().numpy()
-    ap = features['ap'].cpu().detach().numpy()
-
-    n_frames = features['n_frames'].cpu().detach().numpy()
-    for i, (n_frame, name) in enumerate(zip(n_frames, names)):
-
-        f0_i = np.exp(lf0[i, :n_frame, 0])
+    for i, name in enumerate(names):
+        f0_i = np.exp(lf0[i])
         f0_i = savgol_filter(f0_i, 7, 1)
-        f0_i = f0_i * vuv[i, :n_frame, 0]
-
-        f0_i = f0_i.astype(np.float64)
-        sp_i = sp[i, :n_frame].astype(np.float64)
-        ap_i = ap[i, :n_frame].astype(np.float64)
 
         wav_path = os.path.join(synth_dir, '{}.wav'.format(name))
-        wav = pyworld.synthesize(f0_i, sp_i, ap_i, sample_rate)
-        file_io.save_wav(wav_path, wav, sample_rate=sample_rate)
+        wav = world.synthesis(f0_i, vuv[i], sp[i], ap[i], sample_rate=sample_rate)
+        file_io.save_wav(wav, wav_path, sample_rate=sample_rate)
 
 
 class VAEExperimentBuilder(ExperimentBuilder):

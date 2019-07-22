@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -9,10 +7,11 @@ from morgana.base_models import BaseSPSS
 from morgana.experiment_builder import ExperimentBuilder
 from morgana.metrics import LF0Distortion
 from morgana.viz.synthesis import MLPG
-from morgana import data
 from morgana import utils
 
 from misc import batch_synth, GaussianMixtureModel
+
+from tts_data_tools import data_sources
 
 
 class F0_MDN(BaseSPSS):
@@ -47,25 +46,23 @@ class F0_MDN(BaseSPSS):
         self.metrics.add_metrics('all',
                                  LF0_RMSE_Hz=LF0Distortion())
 
-    @classmethod
-    def train_data_sources(cls):
+    def train_data_sources(self):
         return {
-            'n_frames': data.TextSource('n_frames'),
-            'n_phones': data.TextSource('n_phones'),
-            'dur': data.TextSource('dur', normalisation='mvn'),
-            'lab': data.NumpyBinarySource('lab', normalisation='minmax'),
-            'counters': data.NumpyBinarySource('counters', normalisation='minmax'),
-            'lf0': data.NumpyBinarySource('lf0', normalisation='mvn', use_deltas=True),
-            'vuv': data.NumpyBinarySource('vuv', dtype=np.bool),
+            'n_frames': data_sources.TextSource('n_frames'),
+            'n_phones': data_sources.TextSource('n_phones'),
+            'dur': data_sources.TextSource('dur', normalisation='mvn'),
+            'lab': data_sources.NumpyBinarySource('lab', normalisation='minmax'),
+            'counters': data_sources.NumpyBinarySource('counters', normalisation='minmax'),
+            'lf0': data_sources.NumpyBinarySource('lf0', normalisation='mvn', use_deltas=True),
+            'vuv': data_sources.NumpyBinarySource('vuv'),
         }
 
-    @classmethod
-    def valid_data_sources(cls):
-        data_sources = cls.train_data_sources()
-        data_sources['sp'] = data.NumpyBinarySource('sp')
-        data_sources['ap'] = data.NumpyBinarySource('ap')
+    def valid_data_sources(self):
+        sources = self.train_data_sources()
+        sources['sp'] = data_sources.NumpyBinarySource('sp')
+        sources['ap'] = data_sources.NumpyBinarySource('ap')
 
-        return data_sources
+        return sources
 
     def predict(self, features):
         # Prepare inputs.
