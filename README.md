@@ -67,7 +67,7 @@ python f0_RNN.py --experiment_name RNN \
     --learning_rate 0.005 \
     --batch_size 32 \
     --lr_schedule_name noam \
-    --lr_schedule_kwargs {'warmup_steps': 1000}
+    --lr_schedule_kwargs "{'warmup_steps': 1000}"
 
 python f0_RNN_scaled.py --experiment_name RNN_scaled \
     --data_root ~/data/Blizzard2017 \
@@ -86,8 +86,8 @@ python f0_MDN.py --experiment_name MDN \
     --learning_rate 0.005 \
     --batch_size 32 \
     --lr_schedule_name noam \
-    --lr_schedule_kwargs {'warmup_steps': 1000}
-    --model_kwargs {'var_floor': 1e-4}
+    --lr_schedule_kwargs "{'warmup_steps': 1000}"
+    --model_kwargs "{'var_floor': 1e-4}"
 
 python f0_VAE.py --experiment_name VAE \
     --data_root ~/data/Blizzard2017 \
@@ -99,9 +99,9 @@ python f0_VAE.py --experiment_name VAE \
     --learning_rate 0.005 \
     --batch_size 32 \
     --lr_schedule_name noam \
-    --lr_schedule_kwargs {'warmup_steps': 1600}
+    --lr_schedule_kwargs "{'warmup_steps': 1600}"
     --kld_wait_epochs 1
     --kld_warmup_epochs 40
-    --model_kwargs {'kld_weight': 0.01}
+    --model_kwargs "{'kld_weight': 0.01}"
 ```
 
