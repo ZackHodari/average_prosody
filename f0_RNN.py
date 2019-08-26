@@ -99,9 +99,9 @@ class F0_RNN(BaseSPSS):
 
         return self._loss(inputs, outputs, seq_len)
 
-    def analysis_for_valid_batch(self, features, output_features, names, out_dir, sample_rate=16000, **kwargs):
-        super(F0_RNN, self).analysis_for_valid_batch(features, output_features, names, out_dir, **kwargs)
-        batch_synth(features, output_features, names, out_dir, sample_rate)
+    def analysis_for_valid_batch(self, features, output_features, out_dir, sample_rate=16000, **kwargs):
+        super(F0_RNN, self).analysis_for_valid_batch(features, output_features, out_dir, **kwargs)
+        batch_synth(features, output_features, out_dir, sample_rate)
 
 
 def main():

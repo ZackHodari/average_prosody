@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-import pyworld
 from scipy.signal import savgol_filter
 import torch
 from tqdm import tqdm
@@ -14,7 +13,7 @@ from tts_data_tools import file_io
 from tts_data_tools.wav_gen import world
 
 
-def batch_synth(features, output_features, names, out_dir, sample_rate=16000):
+def batch_synth(features, output_features, out_dir, sample_rate=16000):
     synth_dir = os.path.join(out_dir, 'synth')
     os.makedirs(synth_dir, exist_ok=True)
 
@@ -22,7 +21,7 @@ def batch_synth(features, output_features, names, out_dir, sample_rate=16000):
         output_features['lf0'], features['vuv'], features['sp'], features['ap'],
         seq_len=features['n_frames'])
 
-    for i, name in enumerate(names):
+    for i, name in enumerate(features['name']):
         f0_i = np.exp(lf0[i])
         f0_i = savgol_filter(f0_i, 7, 1)
 
@@ -56,7 +55,7 @@ class VAEExperimentBuilder(ExperimentBuilder):
 
         loss = 0.0
         pbar = _logging.ProgressBar(len(data_generator))
-        for i, (features, names) in zip(pbar, data_generator):
+        for i, features in zip(pbar, data_generator):
             self.model.step = (self.epoch - 1) * len(data_generator) + i + 1
 
             # Anneal the KL divergence, linearly increasing from 0.0 to the initial KLD weight set in the model.
@@ -95,8 +94,11 @@ class VAEExperimentBuilder(ExperimentBuilder):
                        **self.model.metrics.results_as_str_dict('train'))
 
             if gen_output:
-                self.model.analysis_for_train_batch(features, output_features, names,
+                self.model.analysis_for_train_batch(features, output_features,
                                                     out_dir=out_dir, sample_rate=self.sample_rate)
+
+        if gen_output:
+            self.model.analysis_for_train_epoch(out_dir=out_dir, sample_rate=self.sample_rate)
 
         if out_dir:
             os.makedirs(out_dir, exist_ok=True)

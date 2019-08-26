@@ -173,31 +173,31 @@ class VAE(BaseVAE):
 
         return self._loss(inputs, outputs, latent, mean, log_variance, seq_len)
 
-    def analysis_for_valid_batch(self, features, output_features, names, out_dir, sample_rate=16000, **kwargs):
-        super(VAE, self).analysis_for_valid_batch(features, output_features, names, out_dir, **kwargs)
-        batch_synth(features, output_features, names, out_dir, sample_rate)
+    def analysis_for_valid_batch(self, features, output_features, out_dir, sample_rate=16000, **kwargs):
+        super(VAE, self).analysis_for_valid_batch(features, output_features, out_dir, **kwargs)
+        batch_synth(features, output_features, out_dir, sample_rate)
 
-    def analysis_for_test_batch(self, features, output_features, names, out_dir, sample_rate=16000, **kwargs):
-        batch_size = len(names)
+    def analysis_for_test_batch(self, features, output_features, out_dir, sample_rate=16000, **kwargs):
+        batch_size = len(features['name'])
 
         # Oracle encoding as the latent.
         oracle_out_dir = os.path.join(out_dir, 'oracle')
         mean, _ = self.encode(features)
         oracle_output_features = self.decode(mean, features)
-        super(VAE, self).analysis_for_test_batch(features, oracle_output_features, names, oracle_out_dir, **kwargs)
+        super(VAE, self).analysis_for_test_batch(features, oracle_output_features, oracle_out_dir, **kwargs)
 
         # Zero vector as the latent.
         zeros_out_dir = os.path.join(out_dir, 'zeros')
         zeros = torch.zeros((batch_size, self.z_dim)).to(mean.device)
         zeros_output_features = self.decode(zeros, features)
-        super(VAE, self).analysis_for_test_batch(features, zeros_output_features, names, zeros_out_dir, **kwargs)
+        super(VAE, self).analysis_for_test_batch(features, zeros_output_features, zeros_out_dir, **kwargs)
 
         # For samples on the surface of a hypersphere as the latent.
         for i in range(4):
             tail_out_dir = os.path.join(out_dir, 'tail_{}'.format(i))
             tail = torch.zeros((batch_size, self.z_dim)).to(mean.device)
             tail_output_features = self.decode(tail, features)
-            super(VAE, self).analysis_for_test_batch(features, tail_output_features, names, tail_out_dir, **kwargs)
+            super(VAE, self).analysis_for_test_batch(features, tail_output_features, tail_out_dir, **kwargs)
 
 
 def main():
