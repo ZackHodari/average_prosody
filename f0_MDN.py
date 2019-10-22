@@ -123,6 +123,7 @@ class F0_MDN(BaseSPSS):
         return NLL
 
     def analysis_for_valid_batch(self, features, output_features, out_dir, sample_rate=16000, **kwargs):
+        kwargs['sample_rate'] = sample_rate
         super(F0_MDN, self).analysis_for_valid_batch(features, output_features, out_dir, **kwargs)
         batch_synth(features, output_features, out_dir, sample_rate)
 

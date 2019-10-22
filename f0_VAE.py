@@ -174,10 +174,12 @@ class VAE(BaseVAE):
         return self._loss(inputs, outputs, latent, mean, log_variance, seq_len)
 
     def analysis_for_valid_batch(self, features, output_features, out_dir, sample_rate=16000, **kwargs):
+        kwargs['sample_rate'] = sample_rate
         super(VAE, self).analysis_for_valid_batch(features, output_features, out_dir, **kwargs)
         batch_synth(features, output_features, out_dir, sample_rate)
 
     def analysis_for_test_batch(self, features, output_features, out_dir, sample_rate=16000, **kwargs):
+        kwargs['sample_rate'] = sample_rate
         batch_size = len(features['name'])
 
         # Oracle encoding as the latent.
