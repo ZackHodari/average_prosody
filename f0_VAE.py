@@ -5,6 +5,7 @@ import torch.nn as nn
 
 from morgana.base_models import BaseVAE
 from morgana.metrics import LF0Distortion
+from morgana.sampling import UniformSphereSurfaceSampler
 from morgana.viz.synthesis import MLPG
 from morgana import utils
 
@@ -195,9 +196,11 @@ class VAE(BaseVAE):
         super(VAE, self).analysis_for_test_batch(features, zeros_output_features, zeros_out_dir, **kwargs)
 
         # For samples on the surface of a hypersphere as the latent.
+        centre = torch.zeros(self.z_dim, device=mean.device)
+        sphere_sampler = UniformSphereSurfaceSampler(centre, 3)
         for i in range(4):
             tail_out_dir = os.path.join(out_dir, 'tail_{}'.format(i))
-            tail = torch.zeros((batch_size, self.z_dim)).to(mean.device)
+            tail = sphere_sampler.sample([batch_size]).to(mean.device)
             tail_output_features = self.decode(tail, features)
             super(VAE, self).analysis_for_test_batch(features, tail_output_features, tail_out_dir, **kwargs)
 

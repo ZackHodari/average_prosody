@@ -171,3 +171,4 @@ class GaussianMixtureModel(torch.distributions.Distribution):
         log_likelihood = torch.sum(log_pi + mixture_log_likelihoods, dim=2)
         return log_likelihood
 
+
