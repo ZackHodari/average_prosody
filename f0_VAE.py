@@ -7,6 +7,8 @@ from morgana.base_models import BaseVAE
 from morgana.metrics import LF0Distortion
 from morgana.sampling import UniformSphereSurfaceSampler
 from morgana.viz.synthesis import MLPG
+from morgana import data
+from morgana import losses
 from morgana import utils
 
 from misc import batch_synth, VAEExperimentBuilder
@@ -90,21 +92,28 @@ class VAE(BaseVAE):
         self.metrics.add_metrics('all',
                                  LF0_RMSE_Hz=LF0Distortion())
 
+    def normaliser_sources(self):
+        return {
+            'dur': data.MeanVarianceNormaliser('dur'),
+            'lab': data.MinMaxNormaliser('lab'),
+            'counters': data.MinMaxNormaliser('counters'),
+            'lf0': data.MeanVarianceNormaliser('lf0', use_deltas=True),
+        }
+
     def train_data_sources(self):
         return {
-            'n_frames': data_sources.TextSource('n_frames'),
-            'n_phones': data_sources.TextSource('n_phones'),
-            'dur': data_sources.TextSource('dur', normalisation='mvn'),
-            'lab': data_sources.NumpyBinarySource('lab', normalisation='minmax'),
-            'counters': data_sources.NumpyBinarySource('counters', normalisation='minmax'),
-            'lf0': data_sources.NumpyBinarySource('lf0', normalisation='mvn', use_deltas=True),
+            'n_frames': data_sources.TextSource('n_frames', sentence_level=True),
+            'dur': data_sources.TextSource('dur'),
+            'lab': data_sources.NumpyBinarySource('lab'),
+            'counters': data_sources.NumpyBinarySource('counters'),
+            'lf0': data_sources.NumpyBinarySource('lf0', use_deltas=True),
             'vuv': data_sources.NumpyBinarySource('vuv'),
         }
 
     def valid_data_sources(self):
         sources = self.train_data_sources()
-        sources['sp'] = data_sources.NumpyBinarySource('sp')
-        sources['ap'] = data_sources.NumpyBinarySource('ap')
+        sources['mcep'] = data_sources.NumpyBinarySource('mcep')
+        sources['bap'] = data_sources.NumpyBinarySource('bap')
 
         return sources
 
@@ -159,20 +168,18 @@ class VAE(BaseVAE):
         # Bypass this function, instead we will define the prediction within analysis_for_test_batch.
         pass
 
-    def loss(self, input_features, output_features):
-        inputs = input_features['normalised_lf0_deltas']
-        outputs = output_features['normalised_lf0_deltas']
-        seq_len = input_features['n_frames']
+    def loss(self, features, output_features):
+        seq_len = features['n_frames']
 
-        latent = output_features['latent']
-        mean = output_features['mean']
-        log_variance = output_features['log_variance']
+        mse = losses.mse(output_features['normalised_lf0_deltas'], features['normalised_lf0_deltas'], seq_len)
+        kld = losses.KLD_standard_normal(output_features['mean'], output_features['log_variance'])
 
         self.metrics.accumulate(
             self.mode,
-            LF0_RMSE_Hz=(input_features['lf0'], output_features['lf0'], seq_len, input_features['vuv']))
+            kld=kld,
+            LF0_RMSE_Hz=(features['lf0'], output_features['lf0'], features['vuv'], seq_len))
 
-        return self._loss(inputs, outputs, latent, mean, log_variance, seq_len)
+        return mse + kld * self.kld_weight
 
     def analysis_for_valid_batch(self, features, output_features, out_dir, sample_rate=16000, **kwargs):
         kwargs['sample_rate'] = sample_rate

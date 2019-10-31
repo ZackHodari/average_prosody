@@ -17,8 +17,8 @@ def batch_synth(features, output_features, out_dir, sample_rate=16000):
     synth_dir = os.path.join(out_dir, 'synth')
     os.makedirs(synth_dir, exist_ok=True)
 
-    lf0, vuv, sp, ap = utils.detach_batched_seqs(
-        output_features['lf0'], features['vuv'], features['sp'], features['ap'],
+    lf0, vuv, mcep, bap = utils.detach_batched_seqs(
+        output_features['lf0'], features['vuv'], features['mcep'], features['bap'],
         seq_len=features['n_frames'])
 
     for i, name in enumerate(features['name']):
@@ -26,7 +26,7 @@ def batch_synth(features, output_features, out_dir, sample_rate=16000):
         f0_i = savgol_filter(f0_i, 7, 1)
 
         wav_path = os.path.join(synth_dir, '{}.wav'.format(name))
-        wav = world.synthesis(f0_i, vuv[i], sp[i], ap[i], sample_rate=sample_rate)
+        wav = world.synthesis(f0_i, vuv[i], mcep[i], bap[i], sample_rate=sample_rate)
         file_io.save_wav(wav, wav_path, sample_rate=sample_rate)
 
 
